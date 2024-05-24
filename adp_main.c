@@ -40,9 +40,29 @@ char* selectFileFromSourceFolder(char *folder);
 // void callFunctionInAnotherFile1(const char *filePath);
 // void callFunctionInAnotherFile2(const char *filePath);
 // void callFunctionInAnotherFile3(const char *filePath);
+void start_screen_ncurser();
 
-void draw_buttons(const char** buttons, int button_count, int current_button, int yButton, int xButton) {
+void draw_buttons(const char** buttons, int button_count, int current_button, int yButton, int xButton, int number) {
     for (int i = 0; i < button_count; i++) {
+        int yButton = yButton;
+
+        //number이 4일때 == 설정을 눌렀을때 버튼이 y축으로 한칸내려와야함(있어야할곳엔 프린트가찍힐거임)
+        if ((number == 4) && (i == 0)) {
+            const char *message = "----------------set_image----------------";
+            mvprintw(yButton + i, xButton, "%s", message);
+            yButton += 1;
+        } else if ((number == 4) && (i == 3)) {
+            printf("\r\n");
+            const char *message = "----------------set_video----------------";
+            mvprintw(yButton + i+1, xButton, "%s", message);
+            yButton += 2;
+        } else if ((number == 4) && (i == 7)) {
+            printf("\r\n");
+            const char *message = "----------------set_text----------------";
+            mvprintw(yButton + i+1, xButton, "%s", message);
+            yButton += 2;
+        }
+
         if (i == current_button) {
             attron(A_REVERSE);
             attron(A_BOLD);
@@ -57,11 +77,7 @@ void draw_buttons(const char** buttons, int button_count, int current_button, in
 
 int main() {
     //setlocale(LC_ALL, "Korean");
-    initscr(); // ncurses 초기화
-    cbreak(); // 문자를 입력할 때 바로 리턴받기 위한 모드
-    noecho(); // 입력한 문자가 화면에 표시되지 않도록 설정
-    keypad(stdscr, TRUE); //특수 키 입력
-    curs_set(0); // 커서 숨기기
+    start_screen_ncurser();
 
     const char *menu_buttons[] = {
     "1. IMAGE > ASCII",
@@ -83,7 +99,7 @@ int main() {
         const char *message = "GOCOM FINAL PROJECT TEAM 3";
         mvprintw(menu_ybutton - 2, (COLS - strlen(message)) / 2, "%s", message);
 
-        draw_buttons((const char **)menu_buttons, menu_button_count, menu_current_button, 10, 10);
+        draw_buttons((const char **)menu_buttons, menu_button_count, menu_current_button, 10, 10, 0);
 
         refresh();
 
@@ -138,13 +154,10 @@ int main() {
             }
             case 3:
                 setting();
-                ffmpeg_linking_check(); // 예비
-                getch();
                 break;
             case 4:
                 introduceUs();
                 printf("\r\n"); // 이렇게 줄바꿈 해야 한다.
-                
                 getch();
                 break;
             case 5: // 나가기
@@ -154,7 +167,6 @@ int main() {
         }
     }
     endwin();
-    return 0;
 }
 
 char* selectFileFromSourceFolder(char *folder) {
@@ -186,7 +198,7 @@ char* selectFileFromSourceFolder(char *folder) {
         int choice = -1;
         while (1) {
             clear();
-            draw_buttons((const char **)fileList, fileCount, highlight, 10, 10);
+            draw_buttons((const char **)fileList, fileCount, highlight, 10, 10, 123);
             refresh();
 
             int ch = getch();
@@ -269,10 +281,81 @@ void imageToText(const char *filePath) {
 }
 
 void setting() {
-    clear();
-    mvprintw(12, 10, "CONF WORKING\n");
-    refresh();
-    getch();
+    start_screen_ncurser();
+    const char *set_buttons[] = {
+    "1. img_resolution",
+    "2. img_delay",
+    "3. img_addr",
+    "1. video_resolution",
+    "2. video_delay",
+    "3. video_interval",
+    "4. video_addr",
+    "1. image_to_text_addr"
+}   ;
+
+    int set_button_count = sizeof(set_buttons) / sizeof(set_buttons[0]);
+    int set_current_button = 0;
+    int set_ybutton = 10;
+    int set_xbutton = 10;
+    while (1) {
+        //system("clear");
+        clear();
+        draw_buttons((const char **)set_buttons, set_button_count, set_current_button, 10, 10, 4);
+        refresh();
+        //리프레시를 두번이나 시켜도 진입할때 프린트가 되지 않음. 스위치문 한번 돌아야 프린트됨. 이유가 뭐지?
+        int ch = getch();
+        refresh();
+        switch (ch) {
+        case KEY_UP:
+            set_current_button = (set_current_button - 1 + set_button_count) % set_button_count;
+            break;
+        case KEY_DOWN:
+            set_current_button = (set_current_button + 1) % set_button_count;
+            break;
+        case 27: // ESC 입력
+            return;
+        case '\n':
+            switch (set_current_button) {
+            case 0: {
+                // "1. img_resolution",
+                break;
+            }
+            case 1: {
+                //"2. img_delay",
+                break;
+            }
+            case 2: {
+                 //"3. img_addr",
+                break;
+            }
+            case 3:
+                //"1. video_resolution",
+                break;
+            case 4:
+                //"2. video_delay",
+                break;
+            case 5:
+                //"3. video_interval",
+                break;
+            case 6:
+                //"4. video_addr",
+                break;
+            case 7:
+                //"1. image_to_text_addr"
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+void start_screen_ncurser() {
+    initscr(); // ncurses 초기화
+    cbreak(); // 문자를 입력할 때 바로 리턴받기 위한 모드
+    noecho(); // 입력한 문자가 화면에 표시되지 않도록 설정
+    keypad(stdscr, TRUE); //특수 키 입력
+    curs_set(0); // 커서 숨기기
 }
 
 void introduceUs() {
