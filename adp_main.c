@@ -79,6 +79,8 @@ void draw_buttons(const char** buttons, int button_count, int current_button, in
             const char *message = "----------------set_text----------------";
             mvprintw(yOffset + i + 1, xButton, "%s", message);
             yOffset += 2;
+        } else if ((number == 4) && (i == 8)) {
+            yOffset += 5;
         }
 
         if (i == current_button) {
@@ -318,6 +320,7 @@ void setting() {
     char img_addr_button[500];
     char video_addr_button[500];
     char image_to_text_addr_button[500];
+    char video_delay_button[50];
 
     int set_current_button = 0;
     int set_ybutton = 10;
@@ -325,21 +328,24 @@ void setting() {
 
     main_loop:
     sprintf(img_resolution_button, "1. img_resolution: %d", img_resolution);
-    sprintf(img_delay_button, "2. img_delay: %d", img_delay);
+    sprintf(img_delay_button, "2. img_delay: %d (microseconds)", img_delay);
     sprintf(video_resolution_button, "1. video_resolution: %d", video_resolution);
     sprintf(img_addr_button, "3. img_addr: %s", img_addr);
     sprintf(video_addr_button, "4. video_addr: %s", video_addr);
     sprintf(image_to_text_addr_button, "1. image_to_text_addr: %s", image_to_text_addr);
+    sprintf(video_delay_button, "2. video_delay: %d (microseconds)", video_delay);
 
     const char *set_buttons[] = {
         img_resolution_button,
         img_delay_button,
         img_addr_button,
         video_resolution_button,
-        "2. video_delay",
+        video_delay_button,
         "3. video_interval",
         video_addr_button,
-        image_to_text_addr_button
+        image_to_text_addr_button,
+        "save and exit",
+        "exit"
     };
 
     int set_button_count = sizeof(set_buttons) / sizeof(set_buttons[0]);
@@ -444,7 +450,18 @@ void setting() {
                     }
                     case 1: {
                         //"2. img_delay",
-                        break;
+                        // 숫자를 입력받는 칸 생성
+                        mvprintw(set_ybutton + 1, 50, "you can write 0~1000");
+                        mvprintw(set_ybutton + 2, 50, "Delay (microseconds) : ");
+                        refresh();
+                        echo();//사용자가 입력한 값이 화면에 표시되도록
+                        int temp = 0;
+                        scanw("%d", &temp);//정수만 받아
+                        if ((temp >= 0) && (temp <= 1000)) {
+                            img_delay = temp;
+                        }
+                        noecho();//입력값이 화면에 보이지 않도록
+                        goto main_loop;
                     }
                     case 2: {
                         //"3. img_addr",
@@ -525,7 +542,18 @@ void setting() {
                     }
                     case 4:
                         //"2. video_delay",
-                        break;
+                        // 숫자를 입력받는 칸 생성
+                        mvprintw(set_ybutton + 6, 50, "you can write 0~1000");
+                        mvprintw(set_ybutton + 7, 50, "Delay (microseconds) : ");
+                        refresh();
+                        echo();//사용자가 입력한 값이 화면에 표시되도록
+                        int temp = 0;
+                        scanw("%d", &temp);//정수만 받아
+                        if ((temp >= 0) && (temp <= 1000)) {
+                            video_delay = temp;
+                        }
+                        noecho();//입력값이 화면에 보이지 않도록
+                        goto main_loop;
                     case 5:
                         //"3. video_interval",
                         break;
@@ -535,6 +563,13 @@ void setting() {
                     case 7:
                         //"1. image_to_text_addr"
                         break;
+                    case 8:
+                        //save and exit
+                        //저장로직짜야함
+                        return;
+                    case 9:
+                        //exit
+                        return;
                     default:
                         break;
                 }
