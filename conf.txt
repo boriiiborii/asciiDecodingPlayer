@@ -1,0 +1,8 @@
+img_resolution: 72
+img_delay: 0
+video_resolution: 0
+video_delay: 0
+video_interval: 0
+img_addr: img_addr
+video_addr: video_addr
+image_to_text_addr: image_addr

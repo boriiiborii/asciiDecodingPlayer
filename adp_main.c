@@ -43,6 +43,7 @@ char* selectFileFromSourceFolder(char *folder);
 // void callFunctionInAnotherFile3(const char *filePath);
 void start_screen_ncurser();
 void make_folder_if_have_not(const char* directory);
+void set_to_conf(int ir, int id, int vr, int vd, int vi, char* ia, char* va, char* ta);
 
 void draw_buttons(const char** buttons, int button_count, int current_button, int yButton, int xButton, int number) {
     //여기서 if number==41코드 추가하니까 왜 메인에서 프린트를 못하는거지? ??? 여기서 막힘. 내일다시하자.
@@ -586,7 +587,7 @@ void setting() {
                         int video_interval_window_height = video_interval_button_count + 2;
 
                         while (1) {
-                            draw_buttons((const char **)video_interval_buttons, video_interval_button_count, video_interval_current_button, video_interval_ybutton+2, video_interval_xbutton, 41);
+                            draw_buttons((const char **)video_interval_buttons, video_interval_button_count, video_interval_current_button, video_interval_ybutton, video_interval_xbutton, 41);
                             refresh();
                             int ch_video_interval = getch();
                             switch (ch_video_interval) {
@@ -635,6 +636,7 @@ void setting() {
                     case 8:
                         //save and exit
                         //저장로직짜야함
+                        set_to_conf(img_resolution, img_delay, video_resolution, video_delay, video_interval, img_addr, video_addr, image_to_text_addr);
                         return;
                     case 9:
                         //exit
@@ -645,6 +647,23 @@ void setting() {
                 break;
         }
     }
+}
+
+void set_to_conf(int img_resolution, int img_delay, int video_resolution, int video_delay, int video_interval, char* img_addr, char* video_addr, char* image_to_text_addr) {
+    FILE *file = fopen("conf.txt", "w");
+    if (file == NULL) {
+        perror("Error opening file");
+        return;
+    }
+    fprintf(file, "img_resolution: %d\n", img_resolution);
+    fprintf(file, "img_delay: %d\n", img_delay);
+    fprintf(file, "video_resolution: %d\n", video_resolution);
+    fprintf(file, "video_delay: %d\n", video_delay);
+    fprintf(file, "video_interval: %d\n", video_interval);
+    fprintf(file, "img_addr: %s\n", img_addr);
+    fprintf(file, "video_addr: %s\n", video_addr);
+    fprintf(file, "image_to_text_addr: %s\n", image_to_text_addr);
+    fclose(file);
 }
 
 
