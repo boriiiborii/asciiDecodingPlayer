@@ -305,7 +305,9 @@ void setting() {
     int video_delay = 0;
     int video_interval = 0;
     
-    char *img_addr, *video_addr, image_to_text_addr;
+    char *img_addr = "img_addr";
+    char *video_addr = "video_addr";
+    char *image_to_text_addr = "image_addr";
 
     start_screen_ncurser();
 
@@ -313,6 +315,9 @@ void setting() {
     char img_resolution_button[50];
     char img_delay_button[50];
     char video_resolution_button[50];
+    char img_addr_button[500];
+    char video_addr_button[500];
+    char image_to_text_addr_button[500];
 
     int set_current_button = 0;
     int set_ybutton = 10;
@@ -322,16 +327,19 @@ void setting() {
     sprintf(img_resolution_button, "1. img_resolution: %d", img_resolution);
     sprintf(img_delay_button, "2. img_delay: %d", img_delay);
     sprintf(video_resolution_button, "1. video_resolution: %d", video_resolution);
+    sprintf(img_addr_button, "3. img_addr: %s", img_addr);
+    sprintf(video_addr_button, "4. video_addr: %s", video_addr);
+    sprintf(image_to_text_addr_button, "1. image_to_text_addr: %s", image_to_text_addr);
 
     const char *set_buttons[] = {
         img_resolution_button,
         img_delay_button,
-        "3. img_addr",
+        img_addr_button,
         video_resolution_button,
         "2. video_delay",
         "3. video_interval",
-        "4. video_addr",
-        "1. image_to_text_addr"
+        video_addr_button,
+        image_to_text_addr_button
     };
 
     int set_button_count = sizeof(set_buttons) / sizeof(set_buttons[0]);
