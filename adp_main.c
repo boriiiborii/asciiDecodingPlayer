@@ -321,6 +321,7 @@ void setting() {
     char video_addr_button[500];
     char image_to_text_addr_button[500];
     char video_delay_button[50];
+    char video_interval_button[50];
 
     int set_current_button = 0;
     int set_ybutton = 10;
@@ -334,6 +335,7 @@ void setting() {
     sprintf(video_addr_button, "4. video_addr: %s", video_addr);
     sprintf(image_to_text_addr_button, "1. image_to_text_addr: %s", image_to_text_addr);
     sprintf(video_delay_button, "2. video_delay: %d (microseconds)", video_delay);
+    sprintf(video_interval_button, "3. video_interval: %d", video_interval);
 
     const char *set_buttons[] = {
         img_resolution_button,
@@ -341,7 +343,7 @@ void setting() {
         img_addr_button,
         video_resolution_button,
         video_delay_button,
-        "3. video_interval",
+        video_interval_button,
         video_addr_button,
         image_to_text_addr_button,
         "save and exit",
@@ -465,7 +467,16 @@ void setting() {
                     }
                     case 2: {
                         //"3. img_addr",
-                        break;
+                        //TODO: 글자 넣는거 안됨. 고쳐야함.
+                        mvprintw(set_ybutton + 2, 50, "Image Address: ");
+                        refresh();
+                        echo();
+                        char temp_addr[500]; // 임시 버퍼를 사용하여 입력 받음
+                        getstr(temp_addr); // 임시 버퍼에 입력 받음
+                        strncpy(img_addr, temp_addr, 499); // 입력 받은 값을 img_addr에 복사
+                        img_addr[499] = '\0'; // 문자열 종료
+                        noecho();
+                        goto main_loop;
                     }
                     case 3: {
                         //"1. video_resolution",
@@ -540,23 +551,81 @@ void setting() {
                         }
                         break;
                     }
-                    case 4:
+                    case 4: {
                         //"2. video_delay",
                         // 숫자를 입력받는 칸 생성
                         mvprintw(set_ybutton + 6, 50, "you can write 0~1000");
                         mvprintw(set_ybutton + 7, 50, "Delay (microseconds) : ");
                         refresh();
-                        echo();//사용자가 입력한 값이 화면에 표시되도록
+                        echo(); // 사용자가 입력한 값이 화면에 표시되도록
                         int temp = 0;
-                        scanw("%d", &temp);//정수만 받아
-                        if ((temp >= 0) && (temp <= 1000)) {
+                        scanw("%d", &temp); // 정수만 받아
+                        if (temp >= 0 && temp <= 1000) {
                             video_delay = temp;
                         }
-                        noecho();//입력값이 화면에 보이지 않도록
+                        noecho(); // 입력값이 화면에 보이지 않도록
                         goto main_loop;
-                    case 5:
+                    }
+
+                    case 5: {
                         //"3. video_interval",
+
+                        const char *video_interval_buttons[] = {
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                        };
+
+                        int video_interval_button_count = sizeof(video_interval_buttons) / sizeof(video_interval_buttons[0]);
+                        int video_interval_current_button = 0;
+                        int video_interval_ybutton = 16;
+                        int video_interval_xbutton = 51;
+                        int video_interval_window_width = 20;
+                        int video_interval_window_height = video_interval_button_count + 2;
+
+                        while (1) {
+                            draw_buttons((const char **)video_interval_buttons, video_interval_button_count, video_interval_current_button, video_interval_ybutton+2, video_interval_xbutton, 41);
+                            refresh();
+                            int ch_video_interval = getch();
+                            switch (ch_video_interval) {
+                                case KEY_LEFT:
+                                    video_interval_current_button = (video_interval_current_button - 1 + video_interval_button_count) % video_interval_button_count;
+                                    break;
+                                case KEY_RIGHT:
+                                    video_interval_current_button = (video_interval_current_button + 1) % video_interval_button_count;
+                                    break;
+                                case '\n':
+                                    switch (video_interval_current_button) {
+                                        case 0:
+                                            video_interval = 1;
+                                            goto main_loop;
+                                        case 1:
+                                            video_interval = 2;
+                                            goto main_loop;
+                                        case 2:
+                                            video_interval = 3;
+                                            goto main_loop;
+                                        case 3:
+                                            video_interval = 4;
+                                            goto main_loop;
+                                        case 4:
+                                            video_interval = 5;
+                                            goto main_loop;
+                                        case 27: // ESC 입력
+                                            goto main_loop;
+                                        default:
+                                            break;
+                                    }
+                                    // 선택이 완료되면 반복문을 탈출
+                                    break;
+                                case 27: // ESC 입력
+                                    return;
+                            }
+                        }
                         break;
+                    }
                     case 6:
                         //"4. video_addr",
                         break;
