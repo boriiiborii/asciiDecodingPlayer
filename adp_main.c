@@ -6,6 +6,7 @@
 //#include <stdlib.h>  -화진-
 //#include <stdio.h>
 #include <dirent.h> // 파일가져올때 fopen
+#include <sys/stat.h>
 
 void ffmpeg_linking_check(){
     // ffmpeg 라이브러리의 링크를 확인하는 함수
@@ -41,36 +42,53 @@ char* selectFileFromSourceFolder(char *folder);
 // void callFunctionInAnotherFile2(const char *filePath);
 // void callFunctionInAnotherFile3(const char *filePath);
 void start_screen_ncurser();
+void make_folder_if_have_not(const char* directory);
 
 void draw_buttons(const char** buttons, int button_count, int current_button, int yButton, int xButton, int number) {
-    for (int i = 0; i < button_count; i++) {
-        int yButton = yButton;
+    //여기서 if number==41코드 추가하니까 왜 메인에서 프린트를 못하는거지? ??? 여기서 막힘. 내일다시하자.
+    //number == 41 설정-1번일때
+    if (number == 41) {
+       for (int i = 0; i < button_count; i++) {
+            if (i == current_button) {
+                attron(A_REVERSE);
+                attron(A_BOLD);
+                mvprintw(yButton, xButton + i*5, "%s", buttons[i]);
+                attroff(A_REVERSE);
+                attroff(A_BOLD);
+            } else {
+                mvprintw(yButton, xButton + i*5, "%s", buttons[i]);
+            }
+        }
+    return;
+    }
 
-        //number이 4일때 == 설정을 눌렀을때 버튼이 y축으로 한칸내려와야함(있어야할곳엔 프린트가찍힐거임)
+    int yOffset = yButton;  // yButton 변수를 yOffset으로 변경
+    for (int i = 0; i < button_count; i++) {
+        // number이 4일때 == 설정을 눌렀을때 버튼이 y축으로 한칸 내려와야함(있어야할곳엔 프린트가찍힐거임)
         if ((number == 4) && (i == 0)) {
             const char *message = "----------------set_image----------------";
-            mvprintw(yButton + i, xButton, "%s", message);
-            yButton += 1;
+            mvprintw(yOffset + i, xButton, "%s", message);
+            yOffset += 1;
         } else if ((number == 4) && (i == 3)) {
             printf("\r\n");
             const char *message = "----------------set_video----------------";
-            mvprintw(yButton + i+1, xButton, "%s", message);
-            yButton += 2;
+            mvprintw(yOffset + i + 1, xButton, "%s", message);
+            yOffset += 2;
         } else if ((number == 4) && (i == 7)) {
             printf("\r\n");
             const char *message = "----------------set_text----------------";
-            mvprintw(yButton + i+1, xButton, "%s", message);
-            yButton += 2;
+            mvprintw(yOffset + i + 1, xButton, "%s", message);
+            yOffset += 2;
         }
 
         if (i == current_button) {
             attron(A_REVERSE);
             attron(A_BOLD);
-            mvprintw(yButton + i, xButton, "%s", buttons[i]);
+            mvprintw(yOffset + i, xButton, "%s", buttons[i]);
             attroff(A_REVERSE);
             attroff(A_BOLD);
         } else {
-            mvprintw(yButton + i, xButton, "%s", buttons[i]);
+            mvprintw(yOffset + i, xButton, "%s", buttons[i]);
         }
     }
 }
@@ -281,74 +299,242 @@ void imageToText(const char *filePath) {
 }
 
 void setting() {
-    start_screen_ncurser();
-    const char *set_buttons[] = {
-    "1. img_resolution",
-    "2. img_delay",
-    "3. img_addr",
-    "1. video_resolution",
-    "2. video_delay",
-    "3. video_interval",
-    "4. video_addr",
-    "1. image_to_text_addr"
-}   ;
+    int img_resolution = 0;
+    int img_delay = 0;
+    int video_resolution = 0;
+    int video_delay = 0;
+    int video_interval = 0;
+    
+    char *img_addr, *video_addr, image_to_text_addr;
 
-    int set_button_count = sizeof(set_buttons) / sizeof(set_buttons[0]);
+    start_screen_ncurser();
+
+    // 버튼 이름을 설정합니다.
+    char img_resolution_button[50];
+    char img_delay_button[50];
+    char video_resolution_button[50];
+
     int set_current_button = 0;
     int set_ybutton = 10;
     int set_xbutton = 10;
+
+    main_loop:
+    sprintf(img_resolution_button, "1. img_resolution: %d", img_resolution);
+    sprintf(img_delay_button, "2. img_delay: %d", img_delay);
+    sprintf(video_resolution_button, "1. video_resolution: %d", video_resolution);
+
+    const char *set_buttons[] = {
+        img_resolution_button,
+        img_delay_button,
+        "3. img_addr",
+        video_resolution_button,
+        "2. video_delay",
+        "3. video_interval",
+        "4. video_addr",
+        "1. image_to_text_addr"
+    };
+
+    int set_button_count = sizeof(set_buttons) / sizeof(set_buttons[0]);
+
     while (1) {
         //system("clear");
         clear();
         draw_buttons((const char **)set_buttons, set_button_count, set_current_button, 10, 10, 4);
         refresh();
-        //리프레시를 두번이나 시켜도 진입할때 프린트가 되지 않음. 스위치문 한번 돌아야 프린트됨. 이유가 뭐지?
         int ch = getch();
-        refresh();
         switch (ch) {
-        case KEY_UP:
-            set_current_button = (set_current_button - 1 + set_button_count) % set_button_count;
-            break;
-        case KEY_DOWN:
-            set_current_button = (set_current_button + 1) % set_button_count;
-            break;
-        case 27: // ESC 입력
-            return;
-        case '\n':
-            switch (set_current_button) {
-            case 0: {
-                // "1. img_resolution",
+            case KEY_UP:
+                set_current_button = (set_current_button - 1 + set_button_count) % set_button_count;
                 break;
-            }
-            case 1: {
-                //"2. img_delay",
+            case KEY_DOWN:
+                set_current_button = (set_current_button + 1) % set_button_count;
                 break;
-            }
-            case 2: {
-                 //"3. img_addr",
+            case 27: // ESC 입력
+                return;
+            case '\n':
+                switch (set_current_button) {
+                    case 0: {
+
+                        // "1. img_resolution" 버튼을 선택한 경우
+                        // 이미지 해상도 설정
+
+                        const char *img_resolution_buttons[] = {
+                            "72",
+                            "98",
+                            "128",
+                            "144",
+                            "240",
+                            "360",
+                            "480",
+                            "720"
+                        };
+
+                        int img_resolution_button_count = sizeof(img_resolution_buttons) / sizeof(img_resolution_buttons[0]);
+                        int img_resolution_current_button = 0;
+                        int img_resolution_ybutton = 11;
+                        int img_resolution_xbutton = 51;
+                        int img_resolution_window_width = 20;
+                        int img_resolution_window_height = img_resolution_button_count + 2;
+
+                        while (1) {
+                            draw_buttons((const char **)img_resolution_buttons, img_resolution_button_count, img_resolution_current_button, img_resolution_ybutton, img_resolution_xbutton , 41);
+                            refresh();
+                            int ch_img_resolution = getch();
+                            switch (ch_img_resolution) {
+                                case KEY_LEFT:
+                                    img_resolution_current_button = (img_resolution_current_button - 1 + img_resolution_button_count) % img_resolution_button_count;
+                                    break;
+                                case KEY_RIGHT:
+                                    img_resolution_current_button = (img_resolution_current_button + 1) % img_resolution_button_count;
+                                    break;
+                                case '\n':
+                                    switch (img_resolution_current_button) {
+                                        case 0:
+                                            // "72" 선택한 경우
+                                            img_resolution = 72;
+                                            goto main_loop;
+                                        case 1:
+                                            // "98" 선택한 경우
+                                            img_resolution = 98;
+                                            goto main_loop;
+                                        case 2:
+                                            // "128" 선택한 경우
+                                            img_resolution = 128;
+                                            goto main_loop;
+                                        case 3:
+                                            // "144" 선택한 경우
+                                            img_resolution = 144;
+                                            goto main_loop;
+                                        case 4:
+                                            // "240" 선택한 경우
+                                            img_resolution = 240;
+                                            goto main_loop;
+                                        case 5:
+                                            // "360" 선택한 경우
+                                            img_resolution = 360;
+                                            goto main_loop;
+                                        case 6:
+                                            // "480" 선택한 경우
+                                            img_resolution = 480;
+                                            goto main_loop;
+                                        case 7:
+                                            // "720" 선택한 경우
+                                            img_resolution = 720;
+                                            goto main_loop;
+                                        case 27: // ESC 입력
+                                            goto main_loop;
+                                        default:
+                                            break;
+                                    }
+                                    // 선택이 완료되면 반복문을 탈출합니다.
+                                    break;
+                                case 27: // ESC 입력
+                                    return;
+                            }
+                        }
+                        break;
+                    }
+                    case 1: {
+                        //"2. img_delay",
+                        break;
+                    }
+                    case 2: {
+                        //"3. img_addr",
+                        break;
+                    }
+                    case 3: {
+                        //"1. video_resolution",
+                        // "1. video_resolution" 버튼을 선택한 경우
+                        // 비디오 해상도 설정
+
+                        const char *video_resolution_buttons[] = {
+                            "72",
+                            "98",
+                            "128",
+                            "144",
+                            "240",
+                            "360",
+                            "480",
+                            "720"
+                        };
+
+                        int video_resolution_button_count = sizeof(video_resolution_buttons) / sizeof(video_resolution_buttons[0]);
+                        int video_resolution_current_button = 0;
+                        int video_resolution_ybutton = 16;
+                        int video_resolution_xbutton = 51;
+                        int video_resolution_window_width = 20;
+                        int video_resolution_window_height = video_resolution_button_count + 2;
+
+                        while (1) {
+                            draw_buttons((const char **)video_resolution_buttons, video_resolution_button_count, video_resolution_current_button, video_resolution_ybutton, video_resolution_xbutton, 41);
+                            refresh();
+                            int ch_video_resolution = getch();
+                            switch (ch_video_resolution) {
+                                case KEY_LEFT:
+                                    video_resolution_current_button = (video_resolution_current_button - 1 + video_resolution_button_count) % video_resolution_button_count;
+                                    break;
+                                case KEY_RIGHT:
+                                    video_resolution_current_button = (video_resolution_current_button + 1) % video_resolution_button_count;
+                                    break;
+                                case '\n':
+                                    switch (video_resolution_current_button) {
+                                        case 0:
+                                            video_resolution = 72;
+                                            goto main_loop;
+                                        case 1:
+                                            video_resolution = 98;
+                                            goto main_loop;
+                                        case 2:
+                                            video_resolution = 128;
+                                            goto main_loop;
+                                        case 3:
+                                            video_resolution = 144;
+                                            goto main_loop;
+                                        case 4:
+                                            video_resolution = 240;
+                                            goto main_loop;
+                                        case 5:
+                                            video_resolution = 360;
+                                            goto main_loop;
+                                        case 6:
+                                            video_resolution = 480;
+                                            goto main_loop;
+                                        case 7:
+                                            video_resolution = 720;
+                                            goto main_loop;
+                                        case 27: // ESC 입력
+                                            goto main_loop;
+                                        default:
+                                            break;
+                                    }
+                                    // 선택이 완료되면 반복문을 탈출
+                                    break;
+                                case 27: // ESC 입력
+                                    return;
+                            }
+                        }
+                        break;
+                    }
+                    case 4:
+                        //"2. video_delay",
+                        break;
+                    case 5:
+                        //"3. video_interval",
+                        break;
+                    case 6:
+                        //"4. video_addr",
+                        break;
+                    case 7:
+                        //"1. image_to_text_addr"
+                        break;
+                    default:
+                        break;
+                }
                 break;
-            }
-            case 3:
-                //"1. video_resolution",
-                break;
-            case 4:
-                //"2. video_delay",
-                break;
-            case 5:
-                //"3. video_interval",
-                break;
-            case 6:
-                //"4. video_addr",
-                break;
-            case 7:
-                //"1. image_to_text_addr"
-                break;
-            default:
-                break;
-            }
         }
     }
 }
+
 
 void start_screen_ncurser() {
     initscr(); // ncurses 초기화
@@ -378,4 +564,21 @@ void exitProgram() {
     getch();
     endwin();
     exit(0);
+}
+
+//파라미터로 경로를 받음
+void make_folder_if_have_not(const char* directory) {
+    // 디렉토리 존재 여부 확인
+    struct stat st = {0};
+
+    if (stat(directory, &st) == -1) {
+        // 디렉토리가 존재하지 않으면 생성
+        if (mkdir(directory, 0777) == -1) {
+            perror("mkdir failed");
+        } else {
+            printf("디렉토리 생성: %s\n", directory);
+        }
+    } else {
+        printf("이미 존재하는 디렉토리: %s\n", directory);
+    }
 }
