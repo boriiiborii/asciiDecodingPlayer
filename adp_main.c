@@ -7,6 +7,19 @@
 //#include <stdio.h>
 #include <dirent.h> // 파일가져올때 fopen
 #include <sys/stat.h>
+#include <locale.h>
+
+//-----------setting 전역변수-----------
+int img_resolution = 0;
+int img_delay = 0;
+int video_resolution = 0;
+int video_delay = 0;
+int video_interval = 0;
+    
+char *img_addr = "img_addr";
+char *video_addr = "video_addr";
+char *image_to_text_addr = "image_addr";
+//-----------setting 전역변수-----------
 
 void ffmpeg_linking_check(){
     // ffmpeg 라이브러리의 링크를 확인하는 함수
@@ -44,6 +57,7 @@ char* selectFileFromSourceFolder(char *folder);
 void start_screen_ncurser();
 void make_folder_if_have_not(const char* directory);
 void set_to_conf(int ir, int id, int vr, int vd, int vi, char* ia, char* va, char* ta);
+void set_from_conf(int *img_resolution, int *img_delay, int *video_resolution, int *video_delay, int *video_interval, char *img_addr, char *video_addr, char *image_to_text_addr);
 
 void draw_buttons(const char** buttons, int button_count, int current_button, int yButton, int xButton, int number) {
     //여기서 if number==41코드 추가하니까 왜 메인에서 프린트를 못하는거지? ??? 여기서 막힘. 내일다시하자.
@@ -97,7 +111,7 @@ void draw_buttons(const char** buttons, int button_count, int current_button, in
 }
 
 int main() {
-    //setlocale(LC_ALL, "Korean");
+    setlocale(LC_ALL, "");
     start_screen_ncurser();
 
     const char *menu_buttons[] = {
@@ -113,10 +127,15 @@ int main() {
     int menu_current_button = 0;
     int menu_ybutton = 10;
     int menu_xbutton = 10;
+    
+    //만약 set_conf에서 conf파일이 없다면, setInit으로 처리하기(이것도 만들어야함)
+
     while (1) {
         //system("clear");
         clear();
-        
+
+        //세팅 전역변수을 파일값에서 참고하여 가져와야함(set_conf?메서드 ㅇㅇ)
+
         const char *message = "GOCOM FINAL PROJECT TEAM 3";
         mvprintw(menu_ybutton - 2, (COLS - strlen(message)) / 2, "%s", message);
 
@@ -174,7 +193,7 @@ int main() {
                 break;
             }
             case 3:
-                setting();
+                setting(); //아규먼트값을 setting전역변수를 넣어줘(주소값으로)
                 break;
             case 4:
                 introduceUs();
@@ -301,16 +320,24 @@ void imageToText(const char *filePath) {
     getch();
 }
 
-void setting() {
+void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와줘야함!!!!!!!!
+    //-----------setting 지역변수 (전역변수와 이름은 같음)-----------
     int img_resolution = 0;
     int img_delay = 0;
     int video_resolution = 0;
     int video_delay = 0;
     int video_interval = 0;
-    
+        
     char *img_addr = "img_addr";
     char *video_addr = "video_addr";
     char *image_to_text_addr = "image_addr";
+    //-----------setting 지역변수 (전역변수와 이름은 같음)-----------
+    //conf.txt의 값을 가져와서 셋팅
+    // FILE *file = fopen("conf.txt", "r");
+    // if (file != NULL) {
+    //     set_from_conf(&img_resolution, &img_delay, &video_resolution, &video_delay, &video_interval, img_addr, video_addr, image_to_text_addr);
+    // }
+    
 
     start_screen_ncurser();
 
@@ -468,14 +495,12 @@ void setting() {
                     }
                     case 2: {
                         //"3. img_addr",
-                        //TODO: 글자 넣는거 안됨. 고쳐야함.
                         mvprintw(set_ybutton + 2, 50, "Image Address: ");
                         refresh();
                         echo();
-                        char temp_addr[500]; // 임시 버퍼를 사용하여 입력 받음
-                        getstr(temp_addr); // 임시 버퍼에 입력 받음
-                        strncpy(img_addr, temp_addr, 499); // 입력 받은 값을 img_addr에 복사
-                        img_addr[499] = '\0'; // 문자열 종료
+                        char temp[500]; // 충분한 크기의 문자열을 저장할 수 있는 공간 할당
+                        getstr(temp); //scanw으로 하니까 계속 버스에러났었는데 getstr로 해결
+                        img_addr = temp;
                         noecho();
                         goto main_loop;
                     }
@@ -627,15 +652,34 @@ void setting() {
                         }
                         break;
                     }
-                    case 6:
+                    case 6:{
                         //"4. video_addr",
-                        break;
-                    case 7:
+                        mvprintw(set_ybutton + 2, 50, "Video Address: ");
+                        refresh();
+                        echo();
+                        char temp[500]; // 충분한 크기의 문자열을 저장할 수 있는 공간 할당
+                        getstr(temp); //scanw으로 하니까 계속 버스에러났었는데 getstr로 해결
+                        video_addr = temp;
+                        noecho();
+                        goto main_loop;
+                    }
+                    case 7:{
                         //"1. image_to_text_addr"
-                        break;
+                        mvprintw(set_ybutton + 2, 50, "Image To Text Address: ");
+                        refresh();
+                        echo();
+                        char temp[500]; // 충분한 크기의 문자열을 저장할 수 있는 공간 할당
+                        getstr(temp); //scanw으로 하니까 계속 버스에러났었는데 getstr로 해결
+                        image_to_text_addr = temp;
+                        noecho();
+                        goto main_loop;
+                    }
                     case 8:
                         //save and exit
-                        //저장로직짜야함
+                        
+                        //여기서 파라미터로 받았던 주소값들에 밸류로 내 지역변수 값을 넣어줘
+
+                        //이후 conf파일로도 저장.
                         set_to_conf(img_resolution, img_delay, video_resolution, video_delay, video_interval, img_addr, video_addr, image_to_text_addr);
                         return;
                     case 9:
@@ -655,6 +699,7 @@ void set_to_conf(int img_resolution, int img_delay, int video_resolution, int vi
         perror("Error opening file");
         return;
     }
+    //각각의 키밸류를 공백으로 구분한다고 생각해
     fprintf(file, "img_resolution: %d\n", img_resolution);
     fprintf(file, "img_delay: %d\n", img_delay);
     fprintf(file, "video_resolution: %d\n", video_resolution);
@@ -665,6 +710,53 @@ void set_to_conf(int img_resolution, int img_delay, int video_resolution, int vi
     fprintf(file, "image_to_text_addr: %s\n", image_to_text_addr);
     fclose(file);
 }
+
+void set_from_conf(int *img_resolution, int *img_delay, int *video_resolution, int *video_delay, int *video_interval, char *img_addr, char *video_addr, char *image_to_text_addr) {
+    char line[512];
+    FILE *file = fopen("conf.txt", "r");
+    if (file == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    while (fgets(line, sizeof(line), file)) {
+        char key[128];
+        char value[384];
+
+        // 줄 끝의 콤마와 개행 문자를 제거
+        char *newline = strchr(line, ',');
+        if (newline) {
+            *newline = '\0';
+        }
+
+        // 키와 값을 파싱
+        if (sscanf(line, "%[^:]: %[^\n]", key, value) == 2) {
+            if (strcmp(key, "img_resolution") == 0) {
+                *img_resolution = atoi(value);
+            } else if (strcmp(key, "img_delay") == 0) {
+                *img_delay = atoi(value);
+            } else if (strcmp(key, "video_resolution") == 0) {
+                *video_resolution = atoi(value);
+            } else if (strcmp(key, "video_delay") == 0) {
+                *video_delay = atoi(value);
+            } else if (strcmp(key, "video_interval") == 0) {
+                *video_interval = atoi(value);
+            } else if (strcmp(key, "img_addr") == 0) {
+                strncpy(img_addr, value, 499);
+                img_addr[499] = '\0';
+            } else if (strcmp(key, "video_addr") == 0) {
+                strncpy(video_addr, value, 499);
+                video_addr[499] = '\0';
+            } else if (strcmp(key, "image_to_text_addr") == 0) {
+                strncpy(image_to_text_addr, value, 499);
+                image_to_text_addr[499] = '\0';
+            }
+        }
+    }
+
+    fclose(file);
+}
+
 
 
 void start_screen_ncurser() {
