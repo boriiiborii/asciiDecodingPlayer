@@ -1,8 +1,8 @@
-img_resolution: 0
-img_delay: 0
-video_resolution: 0
-video_delay: 0
-video_interval: 0
-img_addr: ersre
-video_addr: sersfcs
-image_to_text_addr: wrsgvzsd
+img_resolution: 128
+img_delay: 34
+video_resolution: 128
+video_delay: 324
+video_interval: 3
+img_addr: img_addr
+video_addr: video_addr
+image_to_text_addr: image_addr

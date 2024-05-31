@@ -47,7 +47,7 @@ void ffmpeg_linking_check(){
 void imageToAscii(const char *filePath);
 void moveToAscii(const char *filePath);
 void imageToText(const char *filePath);
-void setting();
+void setting(int img_resolution, int img_delay, int video_resolution, int video_delay, int video_interval, char* img_addr, char* video_addr, char* image_to_text_addr);
 void introduceUs();
 //void exitProgram();
 char* selectFileFromSourceFolder(char *folder);
@@ -134,7 +134,7 @@ int main() {
         //system("clear");
         clear();
 
-        //세팅 전역변수을 파일값에서 참고하여 가져와야함(set_conf?메서드 ㅇㅇ)
+        set_from_conf(&img_resolution, &img_delay, &video_resolution, &video_delay, &video_interval, img_addr, video_addr, image_to_text_addr);
 
         const char *message = "GOCOM FINAL PROJECT TEAM 3";
         mvprintw(menu_ybutton - 2, (COLS - strlen(message)) / 2, "%s", message);
@@ -193,7 +193,7 @@ int main() {
                 break;
             }
             case 3:
-                setting(); //아규먼트값을 setting전역변수를 넣어줘(주소값으로)
+                setting(img_resolution, img_delay, video_resolution, video_delay, video_interval, img_addr, video_addr, image_to_text_addr); 
                 break;
             case 4:
                 introduceUs();
@@ -320,17 +320,17 @@ void imageToText(const char *filePath) {
     getch();
 }
 
-void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와줘야함!!!!!!!!
+void setting(int img_resolution, int img_delay, int video_resolution, int video_delay, int video_interval, char* img_addr, char* video_addr, char* image_to_text_addr) {
     //-----------setting 지역변수 (전역변수와 이름은 같음)-----------
-    int img_resolution = 0;
-    int img_delay = 0;
-    int video_resolution = 0;
-    int video_delay = 0;
-    int video_interval = 0;
+    int img_resolution_setting = 0;
+    int img_delay_setting = 0;
+    int video_resolution_setting = 0;
+    int video_delay_setting = 0;
+    int video_interval_setting = 0;
         
-    char *img_addr = "img_addr";
-    char *video_addr = "video_addr";
-    char *image_to_text_addr = "image_addr";
+    char *img_addr_setting = "img_addr";
+    char *video_addr_setting = "video_addr";
+    char *image_to_text_addr_setting = "image_addr";
     //-----------setting 지역변수 (전역변수와 이름은 같음)-----------
     //conf.txt의 값을 가져와서 셋팅
     // FILE *file = fopen("conf.txt", "r");
@@ -435,35 +435,35 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                                     switch (img_resolution_current_button) {
                                         case 0:
                                             // "72" 선택한 경우
-                                            img_resolution = 72;
+                                            img_resolution_setting = 72;
                                             goto main_loop;
                                         case 1:
                                             // "98" 선택한 경우
-                                            img_resolution = 98;
+                                            img_resolution_setting = 98;
                                             goto main_loop;
                                         case 2:
                                             // "128" 선택한 경우
-                                            img_resolution = 128;
+                                            img_resolution_setting = 128;
                                             goto main_loop;
                                         case 3:
                                             // "144" 선택한 경우
-                                            img_resolution = 144;
+                                            img_resolution_setting = 144;
                                             goto main_loop;
                                         case 4:
                                             // "240" 선택한 경우
-                                            img_resolution = 240;
+                                            img_resolution_setting = 240;
                                             goto main_loop;
                                         case 5:
                                             // "360" 선택한 경우
-                                            img_resolution = 360;
+                                            img_resolution_setting = 360;
                                             goto main_loop;
                                         case 6:
                                             // "480" 선택한 경우
-                                            img_resolution = 480;
+                                            img_resolution_setting = 480;
                                             goto main_loop;
                                         case 7:
                                             // "720" 선택한 경우
-                                            img_resolution = 720;
+                                            img_resolution_setting = 720;
                                             goto main_loop;
                                         case 27: // ESC 입력
                                             goto main_loop;
@@ -488,7 +488,7 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                         int temp = 0;
                         scanw("%d", &temp);//정수만 받아
                         if ((temp >= 0) && (temp <= 1000)) {
-                            img_delay = temp;
+                            img_delay_setting = temp;
                         }
                         noecho();//입력값이 화면에 보이지 않도록
                         goto main_loop;
@@ -500,7 +500,7 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                         echo();
                         char temp[500]; // 충분한 크기의 문자열을 저장할 수 있는 공간 할당
                         getstr(temp); //scanw으로 하니까 계속 버스에러났었는데 getstr로 해결
-                        img_addr = temp;
+                        img_addr_setting = temp;
                         noecho();
                         goto main_loop;
                     }
@@ -541,28 +541,28 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                                 case '\n':
                                     switch (video_resolution_current_button) {
                                         case 0:
-                                            video_resolution = 72;
+                                            video_resolution_setting = 72;
                                             goto main_loop;
                                         case 1:
-                                            video_resolution = 98;
+                                            video_resolution_setting = 98;
                                             goto main_loop;
                                         case 2:
-                                            video_resolution = 128;
+                                            video_resolution_setting = 128;
                                             goto main_loop;
                                         case 3:
-                                            video_resolution = 144;
+                                            video_resolution_setting = 144;
                                             goto main_loop;
                                         case 4:
-                                            video_resolution = 240;
+                                            video_resolution_setting = 240;
                                             goto main_loop;
                                         case 5:
-                                            video_resolution = 360;
+                                            video_resolution_setting = 360;
                                             goto main_loop;
                                         case 6:
-                                            video_resolution = 480;
+                                            video_resolution_setting = 480;
                                             goto main_loop;
                                         case 7:
-                                            video_resolution = 720;
+                                            video_resolution_setting = 720;
                                             goto main_loop;
                                         case 27: // ESC 입력
                                             goto main_loop;
@@ -587,7 +587,7 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                         int temp = 0;
                         scanw("%d", &temp); // 정수만 받아
                         if (temp >= 0 && temp <= 1000) {
-                            video_delay = temp;
+                            video_delay_setting = temp;
                         }
                         noecho(); // 입력값이 화면에 보이지 않도록
                         goto main_loop;
@@ -625,19 +625,19 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                                 case '\n':
                                     switch (video_interval_current_button) {
                                         case 0:
-                                            video_interval = 1;
+                                            video_interval_setting = 1;
                                             goto main_loop;
                                         case 1:
-                                            video_interval = 2;
+                                            video_interval_setting = 2;
                                             goto main_loop;
                                         case 2:
-                                            video_interval = 3;
+                                            video_interval_setting = 3;
                                             goto main_loop;
                                         case 3:
-                                            video_interval = 4;
+                                            video_interval_setting = 4;
                                             goto main_loop;
                                         case 4:
-                                            video_interval = 5;
+                                            video_interval_setting = 5;
                                             goto main_loop;
                                         case 27: // ESC 입력
                                             goto main_loop;
@@ -659,7 +659,7 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                         echo();
                         char temp[500]; // 충분한 크기의 문자열을 저장할 수 있는 공간 할당
                         getstr(temp); //scanw으로 하니까 계속 버스에러났었는데 getstr로 해결
-                        video_addr = temp;
+                        video_addr_setting = temp;
                         noecho();
                         goto main_loop;
                     }
@@ -670,7 +670,7 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                         echo();
                         char temp[500]; // 충분한 크기의 문자열을 저장할 수 있는 공간 할당
                         getstr(temp); //scanw으로 하니까 계속 버스에러났었는데 getstr로 해결
-                        image_to_text_addr = temp;
+                        image_to_text_addr_setting = temp;
                         noecho();
                         goto main_loop;
                     }
@@ -680,7 +680,7 @@ void setting() { //TODO: 파라미터값을 전역변수애들 주소 받아와�
                         //여기서 파라미터로 받았던 주소값들에 밸류로 내 지역변수 값을 넣어줘
 
                         //이후 conf파일로도 저장.
-                        set_to_conf(img_resolution, img_delay, video_resolution, video_delay, video_interval, img_addr, video_addr, image_to_text_addr);
+                        set_to_conf(img_resolution_setting, img_delay_setting, video_resolution_setting, video_delay_setting, video_interval_setting, img_addr_setting, video_addr_setting, image_to_text_addr_setting);
                         return;
                     case 9:
                         //exit
@@ -712,25 +712,18 @@ void set_to_conf(int img_resolution, int img_delay, int video_resolution, int vi
 }
 
 void set_from_conf(int *img_resolution, int *img_delay, int *video_resolution, int *video_delay, int *video_interval, char *img_addr, char *video_addr, char *image_to_text_addr) {
-    char line[512];
     FILE *file = fopen("conf.txt", "r");
     if (file == NULL) {
         perror("Error opening file");
         return;
     }
-
+    
+    char line[500]; // 한 줄을 저장할 버퍼
     while (fgets(line, sizeof(line), file)) {
-        char key[128];
-        char value[384];
-
-        // 줄 끝의 콤마와 개행 문자를 제거
-        char *newline = strchr(line, ',');
-        if (newline) {
-            *newline = '\0';
-        }
-
-        // 키와 값을 파싱
+        char key[50]; // 키를 저장할 버퍼
+        char value[500]; // 값을 저장할 버퍼
         if (sscanf(line, "%[^:]: %[^\n]", key, value) == 2) {
+            // 키와 값을 읽어와서 적절한 변수에 할당
             if (strcmp(key, "img_resolution") == 0) {
                 *img_resolution = atoi(value);
             } else if (strcmp(key, "img_delay") == 0) {
@@ -742,18 +735,15 @@ void set_from_conf(int *img_resolution, int *img_delay, int *video_resolution, i
             } else if (strcmp(key, "video_interval") == 0) {
                 *video_interval = atoi(value);
             } else if (strcmp(key, "img_addr") == 0) {
-                strncpy(img_addr, value, 499);
-                img_addr[499] = '\0';
+                //img_addr = value;
             } else if (strcmp(key, "video_addr") == 0) {
-                strncpy(video_addr, value, 499);
-                video_addr[499] = '\0';
+                //strcpy(video_addr, value);
             } else if (strcmp(key, "image_to_text_addr") == 0) {
-                strncpy(image_to_text_addr, value, 499);
-                image_to_text_addr[499] = '\0';
+                //strcpy(image_to_text_addr, value);
             }
         }
     }
-
+    
     fclose(file);
 }
 
