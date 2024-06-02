@@ -1,8 +1,8 @@
-img_resolution: 128
-img_delay: 34
-video_resolution: 128
-video_delay: 324
-video_interval: 3
-img_addr: img_addr
-video_addr: video_addr
-image_to_text_addr: image_addr
+img_resolution: 98
+img_delay: 10
+video_resolution: 98
+video_delay: 10
+video_interval: 2
+img_addr: ./imges
+video_addr: ./videos
+image_to_text_addr: ./save

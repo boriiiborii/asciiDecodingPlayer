@@ -58,7 +58,7 @@ void start_screen_ncurser();
 void make_folder_if_have_not(const char* directory);
 void set_to_conf(int ir, int id, int vr, int vd, int vi, char* ia, char* va, char* ta);
 void set_from_conf(int *img_resolution, int *img_delay, int *video_resolution, int *video_delay, int *video_interval, char *img_addr, char *video_addr, char *image_to_text_addr);
-
+void set_init();
 void draw_buttons(const char** buttons, int button_count, int current_button, int yButton, int xButton, int number) {
     //여기서 if number==41코드 추가하니까 왜 메인에서 프린트를 못하는거지? ??? 여기서 막힘. 내일다시하자.
     //number == 41 설정-1번일때
@@ -129,11 +129,14 @@ int main() {
     int menu_xbutton = 10;
     
     //만약 set_conf에서 conf파일이 없다면, setInit으로 처리하기(이것도 만들어야함)
+    FILE *is_file = fopen("conf.txt", "r");
+    if (is_file == NULL) {
+        set_init();
+    }
 
     while (1) {
         //system("clear");
         clear();
-
         set_from_conf(&img_resolution, &img_delay, &video_resolution, &video_delay, &video_interval, img_addr, video_addr, image_to_text_addr);
 
         const char *message = "GOCOM FINAL PROJECT TEAM 3";
@@ -374,6 +377,7 @@ void setting(int img_resolution, int img_delay, int video_resolution, int video_
         video_interval_button,
         video_addr_button,
         image_to_text_addr_button,
+        "init and exit",
         "save and exit",
         "exit"
     };
@@ -675,6 +679,10 @@ void setting(int img_resolution, int img_delay, int video_resolution, int video_
                         goto main_loop;
                     }
                     case 8:
+                        //init and exit
+                        set_init();
+                        return;
+                    case 9:
                         //save and exit
                         
                         //여기서 파라미터로 받았던 주소값들에 밸류로 내 지역변수 값을 넣어줘
@@ -682,15 +690,29 @@ void setting(int img_resolution, int img_delay, int video_resolution, int video_
                         //이후 conf파일로도 저장.
                         set_to_conf(img_resolution_setting, img_delay_setting, video_resolution_setting, video_delay_setting, video_interval_setting, img_addr_setting, video_addr_setting, image_to_text_addr_setting);
                         return;
-                    case 9:
+                    case 10:
                         //exit
-                        return;
+                        return;    
                     default:
                         break;
                 }
                 break;
         }
     }
+}
+
+void set_init() {
+    FILE *file = fopen("conf.txt", "w");
+    //각각의 키밸류를 공백으로 구분한다고 생각해
+    fprintf(file, "img_resolution: %d\n", 98);
+    fprintf(file, "img_delay: %d\n", 10);
+    fprintf(file, "video_resolution: %d\n", 98);
+    fprintf(file, "video_delay: %d\n", 10);
+    fprintf(file, "video_interval: %d\n", 2);
+    fprintf(file, "img_addr: %s\n", "./imges");
+    fprintf(file, "video_addr: %s\n", "./videos");
+    fprintf(file, "image_to_text_addr: %s\n", "./save");
+    fclose(file);
 }
 
 void set_to_conf(int img_resolution, int img_delay, int video_resolution, int video_delay, int video_interval, char* img_addr, char* video_addr, char* image_to_text_addr) {
