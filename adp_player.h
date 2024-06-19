@@ -1,3 +1,6 @@
+#ifndef ADP_PLAYER_H
+#define ADP_PLAYER_H
+
 #define BUFFER_SIZE (720 * 720 * 1) // 고정 버퍼 (NW * NW * 2 ) 권장
 #define NUM_CHARS 13 //ASCII 아트에 사용할 문자의 개수
 const char CHARS[] = " .,-~:;=!*#$@";
@@ -35,6 +38,13 @@ void topBar(int frame_number, int totalFrame, int pause_state, int video_resolut
 void loadingBar(int screenWidth, int totalFrame, int frame);
 
 int video_player(char* video_addr, int output_interval, int video_resolution, int frame_delay);// .h로 이동
+
+char* ascii_image_to_str_for_txt(unsigned char* image_data, int new_width, int new_height, int img_delay);
+char* image_player_for_txt(char* img_addr, int img_resolution, int img_delay);
+
+int img_to_txt(unsigned char* img_txt, const char* addr);
+char* convert_to_txt(const char* str);
+char* concat_strings(const char* str1, const char* str2);
 
 // 이미지 크기 조정
 void resize_image(unsigned char* input_data, int input_width, int input_height,unsigned char** output_data, int* output_width, int* output_height, int video_resolution) {
@@ -209,12 +219,15 @@ int video_player(char* video_addr, int output_interval, int video_resolution, in
     AVFormatContext* format_context = NULL;
     if (avformat_open_input(&format_context, input_file, NULL, NULL) != 0) {
         printf("Error: Couldn't open input file.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
-
     // 파일에서 스트림 정보 찾기
     if (avformat_find_stream_info(format_context, NULL) < 0) {
         printf("Error: Couldn't find stream information.\r\n");
+         nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
@@ -230,6 +243,8 @@ int video_player(char* video_addr, int output_interval, int video_resolution, in
     // 비디오 스트림이 없는 경우 오류 출력
     if (video_stream_index == -1) {
         printf("Error: Couldn't find a video stream.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
@@ -242,6 +257,8 @@ int video_player(char* video_addr, int output_interval, int video_resolution, in
     //------------화-
     if (!codec) {
         printf("Error: Unsupported codec.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
@@ -249,18 +266,24 @@ int video_player(char* video_addr, int output_interval, int video_resolution, in
     AVCodecContext* codec_context = avcodec_alloc_context3(codec);
     if (!codec_context) {
         printf("Error: Failed to allocate codec context.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
     // 코덱 파라미터를 코덱 컨텍스트로 설정
     if (avcodec_parameters_to_context(codec_context, codec_params) < 0) {
         printf("Error: Failed to initialize codec context.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
     // 코덱 열기
     if (avcodec_open2(codec_context, codec, NULL) < 0) {
         printf("Error: Failed to open codec.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
@@ -268,12 +291,16 @@ int video_player(char* video_addr, int output_interval, int video_resolution, in
     AVFrame* frame = av_frame_alloc();
     if (!frame) {
         printf("Error: Failed to allocate frame.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
     AVPacket* packet = av_packet_alloc();
     if (!packet) {
         printf("Error: Failed to allocate packet.\r\n");
+        nodelay(stdscr, FALSE);
+        getchar(); // 대기하고 사용자 입력 받기
         return 1;
     }
 
@@ -372,3 +399,142 @@ end:
 
     return 0;
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+char* ascii_image_to_str_for_txt(unsigned char* image_data, int new_width, int new_height, int img_delay) {
+    // 이미지를 저장할 문자열 동적 할당
+    int str_size = (new_width + 1) * new_height + 1; // 각 행마다 개행 문자를 포함하기 때문에 new_width + 1
+    char* result = (char*)malloc(str_size);
+    if (result == NULL) {
+        fprintf(stderr, "메모리 할당 실패\n");
+        exit(1);
+    }
+
+    char* ptr = result;
+    for (int i = 0; i < new_height; i++) {
+        for (int j = 0; j < new_width; j++) {
+            int index = (int)((float)image_data[i * new_width + j] / 255 * NUM_CHARS);
+            if (index == NUM_CHARS) index = NUM_CHARS - 1;
+            *ptr = CHARS[index];
+            ptr++;
+        }
+        *ptr = '\n'; // 개행 문자 추가
+        ptr++;
+        usleep(img_delay * 1); // 마이크로초 단위의 지연
+    }
+    *ptr = '\0'; // 문자열 마지막에 널 문자 추가
+
+    return result;
+}
+
+char* image_player_for_txt(char* img_addr, int img_resolution, int img_delay) {
+    // Load image using stb_image
+    int width, height, channels;
+    unsigned char* img = stbi_load(img_addr, &width, &height, &channels, 0); // 이미지 주소에서 가져오기
+    if (!img) {
+        printf("Failed to load image.\r\n");
+        getchar();
+        return NULL;
+    }
+
+    // Calculate new width and height while maintaining aspect ratio
+    int new_width, new_height;
+    if (width > height) {
+        new_width = img_resolution;
+        new_height = (int)((float)height / width * img_resolution);
+    }
+    else {
+        new_height = img_resolution;
+        new_width = (int)((float)width / height * img_resolution);
+    }
+
+    // Convert image to grayscale
+    unsigned char* gray_img = (unsigned char*)malloc(width * height);
+    for (int i = 0; i < width * height; i++) {
+        int r = img[3 * i];
+        int g = img[3 * i + 1];
+        int b = img[3 * i + 2];
+        gray_img[i] = (unsigned char)(0.2989 * r + 0.5870 * g + 0.1140 * b);
+    }
+
+    // Resize image using stb_image_resize
+    unsigned char* resized_img = (unsigned char*)malloc(new_width * new_height);
+    //stbir_resize_uint8(gray_img, width, height, 0, resized_img, new_width, new_height, 0, 1);
+    resize_image(gray_img, width, height, &resized_img, &new_width, &new_height,img_resolution);
+    // 이미지 정규화
+    normalize_image(resized_img, new_width, new_height);
+
+    // Print ASCII image
+    //print_ascii_image(resized_img, new_width, new_height, img_delay);
+    //print_ascii_image_for_txt(resized_img,new_width,new_height,100,file_name);
+    char* img_txt = (char*)malloc((new_width+1) * (new_height+1));
+    img_txt = ascii_image_to_str_for_txt(resized_img,new_width,new_height,100);
+
+    // Free memory
+    free(img);
+    free(gray_img);
+    free(resized_img);
+    
+    // Wait for user input (pressing any key)
+    //printf("Press any key to continue...");
+    //getchar(); // 대기하고 사용자 입력 받기
+
+    return img_txt;
+}
+int img_to_txt(unsigned char* img_txt, const char* addr) {
+    // 파일 포인터 선언
+    FILE* file;
+
+    // 파일 열기, "w" 모드는 쓰기 모드
+    file = fopen(addr, "w");
+
+    // 파일 열기에 실패하면 에러 메시지 출력 후 함수 종료
+    if (file == NULL) {
+        printf("파일 열기에 실패했습니다.\n");
+        return 1;
+    }
+
+    // 파일에 문자열 쓰기
+    fprintf(file, "%s", img_txt);
+
+    // 파일 닫기
+    fclose(file);
+
+    // 파일 저장에 성공했다는 메시지 출력 및 저장 위치 정보 표시
+    printf("파일이 성공적으로 저장되었습니다.\r\n저장 위치: %s\r\n", addr);
+
+    return 0;
+}
+char* convert_to_txt(const char* str) {
+    // 문자열을 복사하여 작업하기 위한 임시 문자열
+    char* temp_str = strdup(str);
+    // '/'를 기준으로 문자열 분할
+    char* token = strtok(temp_str, "/");
+    char* last_token = NULL;
+    while (token != NULL) {
+        last_token = token;
+        token = strtok(NULL, "/");
+    }
+    // '.'를 기준으로 문자열 분할
+    token = strtok(last_token, ".");
+    char* file_name = (char*)malloc(strlen(token) + 5); // "txt" + '\0'
+    if (file_name != NULL) {
+        strcpy(file_name, token);
+        strcat(file_name, ".txt");
+    }
+    free(temp_str);
+    return file_name;
+}
+char* concat_strings(const char* str1, const char* str2) {
+    // 충분한 메모리를 할당하여 두 문자열을 합칠 공간을 만듭니다.
+    char* result = (char*)malloc(strlen(str1) + strlen(str2) + 1);
+    if (result == NULL) {
+        fprintf(stderr, "메모리 할당 실패\n");
+        exit(1);
+    }
+    // str1 문자열을 result에 복사합니다.
+    strcpy(result, str1);
+    // str2 문자열을 result에 이어붙입니다.
+    strcat(result, str2);
+    return result;
+}
+#endif
